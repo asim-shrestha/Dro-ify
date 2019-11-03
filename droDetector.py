@@ -1,23 +1,24 @@
 import sys
 import cv2
+import tkinter as tk
 import numpy as np
+import os
 
 class Dro:
     def __init__(self, droCoords):
         #Ensure that the dro image is a square
+        self.distanceBetweenPoints = min(droCoords[2], droCoords[3])
         self.pointA = (droCoords[0], droCoords[1])
-        self.pointB = (droCoords[0] + droCoords[2], droCoords[1] + droCoords[3])
+        self.pointB = (droCoords[0] + self.distanceBetweenPoints, droCoords[1] + self.distanceBetweenPoints)
 
 class DroDetector:
     @staticmethod
     def getDroCoords(image):
-        try:
-            grayscaledImage = DroDetector.grayscaleImage(image)
-            droCoordsList = DroDetector.__findDroCoords(grayscaledImage)
-            dro = Dro(droCoordsList)
-            return dro
-        except:
-            print('Something is wrong with your image')
+        grayscaledImage = DroDetector.grayscaleImage(image)
+        droCoordsList = DroDetector.__findDroCoords(grayscaledImage)
+        dro = Dro(droCoordsList)
+        return dro
+        print('Something is wrong with your image')
 
     @staticmethod
     def grayscaleImage(image):
@@ -43,6 +44,34 @@ class DroDetector:
             return faces[0]
 
 class DroViewer:
+    def __init__(self, image):
+        #Create window and window items
+        self.rootWindow = tk.Tk()
+        self.rootWindow.title("Dro-Detector")
+        self.rootWindow.iconbitmap(os.getcwd() + '\icon.ico')
+
+        selectImageButton = tk.Button(self.rootWindow, text = 'Select image', command = self.selectImageButton)
+        selectImageButton.grid(row = 3, column = 0)
+
+        setFileNameButton = tk.Button(self.rootWindow, text = 'Set file name', command = self.setFileNameButton)
+        setFileNameButton.grid(row = 3, column = 1)
+
+        droifyButton = tk.Button(self.rootWindow, text = 'Droify!', state = tk.DISABLED)
+        droifyButton.grid(row = 3, column = 2)
+
+        #Start window
+        self.rootWindow.mainloop()
+
+    def setFileNameButton(self):
+        nameEntry = tk.Entry(self.rootWindow, width = 50)
+        nameEntry.grid(row = 2, column = 1) 
+        return
+
+    def selectImageButton(self):
+        myLabel = tk.Label(self.rootWindow, text = 'Clicked!')
+        myLabel.grid(row = 1, column = 0) 
+        return
+
     @staticmethod
     def viewDroInImage(dro, image):
         droImage = image.copy()
@@ -84,5 +113,5 @@ class DroViewer:
         return result.astype('uint8')
 
     @staticmethod
-    def saveDroImage(image):
-        cv2.imwrite('dros/dro1.jpg', image)
+    def saveDroImage(image, imageName):
+        cv2.imwrite('dros/' + imageName+ '.png', image)

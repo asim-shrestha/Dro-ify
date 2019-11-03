@@ -3,15 +3,16 @@
 #Info on the dodge blend algorithm from https://stackoverflow.com/questions/3312606/pil-composite-merge-two-images-as-dodge
 import sys
 import cv2
-from droDetector import DroDetector, Dro, DroViewer
+from DroDetector import DroDetector, Dro, DroViewer
 
 #Read image
 imagePath = sys.argv[1]
-# droName = sys.argv[2]
+droImageName = sys.argv[2]
 image = cv2.imread(imagePath)
 dro = DroDetector.getDroCoords(image)
 
 #View dro
-DroViewer.viewDroInImage(dro, image)
-droImage = DroViewer.getDroImage(dro, image)
-DroViewer.saveDroImage(droImage)
+droViewer = DroViewer(image)
+# DroViewer.viewDroInImage(dro, image)
+# droImage = DroViewer.getDroImage(dro, image)
+# DroViewer.saveDroImage(droImage, droImageName)
