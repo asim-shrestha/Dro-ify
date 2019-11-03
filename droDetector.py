@@ -1,8 +1,9 @@
 import sys
 import cv2
 import tkinter as tk
+from tkinter import filedialog
+from PIL import ImageTk, Image
 import numpy as np
-import os
 
 class Dro:
     def __init__(self, droCoords):
@@ -44,33 +45,49 @@ class DroDetector:
             return faces[0]
 
 class DroViewer:
+    acquiredImage = False
+    acquiredFace = False
+    
     def __init__(self, image):
         #Create window and window items
         self.rootWindow = tk.Tk()
         self.rootWindow.title("Dro-Detector")
-        self.rootWindow.iconbitmap(os.getcwd() + '\icon.ico')
+        self.rootWindow.iconbitmap('icon.ico')
+        
+        imagePath = ImageTk.PhotoImage(image = Image.open("abba.jpg"))
+        self.theImage = tk.Label(image = imagePath)
+        self.theImage.grid(row = 0, column = 1)
 
-        selectImageButton = tk.Button(self.rootWindow, text = 'Select image', command = self.selectImageButton)
-        selectImageButton.grid(row = 3, column = 0)
+        self.selectImageButton = tk.Button(self.rootWindow, text = 'Select image', command = self.selectImageButton)
+        self.selectImageButton.grid(row = 3, column = 0)
 
-        setFileNameButton = tk.Button(self.rootWindow, text = 'Set file name', command = self.setFileNameButton)
-        setFileNameButton.grid(row = 3, column = 1)
+        self.setFileNameButton = tk.Button(self.rootWindow, text = 'Set file name', command = self.setFileNameButton)
+        self.setFileNameButton.grid(row = 3, column = 1)
 
-        droifyButton = tk.Button(self.rootWindow, text = 'Droify!', state = tk.DISABLED)
-        droifyButton.grid(row = 3, column = 2)
+        self.droifyButton = tk.Button(self.rootWindow, text = 'Droify!', state = tk.DISABLED)
+        self.droifyButton.grid(row = 3, column = 2)
 
+        self.refresh = tk.Button(self.rootWindow, text = 'refreshImage', command = self.refreshImage)
+        self.refresh.grid(row = 3, column = 3)
         #Start window
         self.rootWindow.mainloop()
+
+    def selectImageButton(self):
+        self.rootWindow.filename = filedialog.askopenfilename(title = "Select an image", filetypes = (("png", "*.png"), ("all files", "*.*")))
+        imagePath = ImageTk.PhotoImage(image = Image.open(self.rootWindow.filename))
+        self.theImage.config(image = imagePath)
+        self.theImage.image = imagePath
+        return
 
     def setFileNameButton(self):
         nameEntry = tk.Entry(self.rootWindow, width = 50)
         nameEntry.grid(row = 2, column = 1) 
         return
 
-    def selectImageButton(self):
-        myLabel = tk.Label(self.rootWindow, text = 'Clicked!')
-        myLabel.grid(row = 1, column = 0) 
-        return
+    def refreshImage(self):
+        imagePath = ImageTk.PhotoImage(image = Image.open(self.rootWindow.filename))
+        self.theImage = tk.Label(image = imagePath)
+
 
     @staticmethod
     def viewDroInImage(dro, image):
