@@ -45,49 +45,96 @@ class DroDetector:
             return faces[0]
 
 class DroViewer:
-    acquiredImage = False
-    acquiredFace = False
+    imagePath = ''
+    dro = None
+    image = None
     
     def __init__(self, image):
-        #Create window and window items
+        self.setUpRootWindow()        
+        self.setUpWidgets()
+        self.rootWindow.mainloop()
+
+    def setUpRootWindow(self):
         self.rootWindow = tk.Tk()
         self.rootWindow.title("Dro-Detector")
         self.rootWindow.iconbitmap('icon.ico')
-        
-        imagePath = ImageTk.PhotoImage(image = Image.open("abba.jpg"))
-        self.theImage = tk.Label(image = imagePath)
-        self.theImage.grid(row = 0, column = 1)
+
+    def setUpWidgets(self):
+        self.theImage = tk.Label(text = "Please select an image!")
+        self.theImage.grid(row = 0, column = 0, columnspan = 4)
 
         self.selectImageButton = tk.Button(self.rootWindow, text = 'Select image', command = self.selectImageButton)
-        self.selectImageButton.grid(row = 3, column = 0)
+        self.selectImageButton.grid(row = 3, column = 0, columnspan = 1)
 
-        self.setFileNameButton = tk.Button(self.rootWindow, text = 'Set file name', command = self.setFileNameButton)
-        self.setFileNameButton.grid(row = 3, column = 1)
+        self.findFaceButton = tk.Button(self.rootWindow, text = 'Find face', command = self.findFaceButton)
+        self.findFaceButton.grid(row = 3, column = 1, columnspan = 1)
 
-        self.droifyButton = tk.Button(self.rootWindow, text = 'Droify!', state = tk.DISABLED)
-        self.droifyButton.grid(row = 3, column = 2)
+        self.droifyButton = tk.Button(self.rootWindow, text = 'Droify!', command = self.droifyButton)
+        self.droifyButton.grid(row = 3, column = 2, columnspan = 1)
 
-        self.refresh = tk.Button(self.rootWindow, text = 'refreshImage', command = self.refreshImage)
-        self.refresh.grid(row = 3, column = 3)
-        #Start window
-        self.rootWindow.mainloop()
+        self.saveButton = tk.Button(self.rootWindow, text = 'Save image', command = self.saveImageButton)
+        self.saveButton.grid(row = 3, column = 3, columnspan = 1)
+
 
     def selectImageButton(self):
-        self.rootWindow.filename = filedialog.askopenfilename(title = "Select an image", filetypes = (("png", "*.png"), ("all files", "*.*")))
-        imagePath = ImageTk.PhotoImage(image = Image.open(self.rootWindow.filename))
-        self.theImage.config(image = imagePath)
-        self.theImage.image = imagePath
+        imageFileName = filedialog.askopenfilename(title = "Select an image", filetypes = (("png", "*.png"), ("all files", "*.*")))
+        if(imageFileName != ''):
+            self.imagePath = imageFileName
+            self.imageReset()
+            acquiredImage = ImageTk.PhotoImage(image = Image.open(imageFileName))
+            self.theImage.config(image = acquiredImage)
+            self.theImage.image = acquiredImage
+
+    def imageReset(self):
         return
 
-    def setFileNameButton(self):
-        nameEntry = tk.Entry(self.rootWindow, width = 50)
-        nameEntry.grid(row = 2, column = 1) 
+    def findFaceButton(self):
+        #Get dro from file
+        image = cv2.imread(self.imagePath)
+        self.dro = DroDetector.getDroCoords(image)
+        faceInImage = image[self.dro.pointA[1]:self.dro.pointB[1] , self.dro.pointA[0]:self.dro.pointB[0]]
+
+        #save in temp
+        self.image = faceInImage
+        self.storeImage(faceInImage)
+
+        #load image in temp
+        acquiredImage = ImageTk.PhotoImage(image = Image.open('temp/temp.png'))
+        self.theImage.config(image = acquiredImage)
+        self.theImage.image = acquiredImage
+
+        #Disable this button
+
+        #Activate droify button
         return
 
-    def refreshImage(self):
-        imagePath = ImageTk.PhotoImage(image = Image.open(self.rootWindow.filename))
-        self.theImage = tk.Label(image = imagePath)
+    def droifyButton(self):
+        image = cv2.imread(self.imagePath)
+        droImage = self.getDroImage(self.dro, image)
 
+        #save in temp
+        self.storeImage(droImage)
+
+        #load image in temp
+        acquiredImage = ImageTk.PhotoImage(image = Image.open('temp/temp.png'))
+        self.theImage.config(image = acquiredImage)
+        self.theImage.image = acquiredImage
+        return
+
+    def saveImageButton(self):
+        savedImagePath = filedialog.asksaveasfile(mode='w', defaultextension=".png")
+        if savedImagePath != None:
+            self.saveDroImage(self.image, savedImagePath.name)
+            
+
+        return 
+    @staticmethod
+    def storeDroImage(dro, image):
+        droImage = image[dro.pointA[1]:dro.pointB[1] , dro.pointA[0]:dro.pointB[0]]
+        lineColour = (0, 255, 0)
+        lineThickness = 1
+        cv2.rectangle(droImage, dro.pointA, dro.pointB, (0, 255, 0), lineThickness)
+        DroViewer.showImage('Dro found', droImage)
 
     @staticmethod
     def viewDroInImage(dro, image):
@@ -107,7 +154,6 @@ class DroViewer:
     def getDroImage(dro, image):
         #Greyscale dro closeup
         droImage = image[dro.pointA[1]:dro.pointB[1] , dro.pointA[0]:dro.pointB[0]]
-        DroViewer.showImage('Initial image', droImage)
         droImage = DroDetector.grayscaleImage(droImage)
 
         #Invert for the algorithm
@@ -118,7 +164,6 @@ class DroViewer:
 
         #Dodge blend for the algorithm
         finalImage = DroViewer.dodge(blurredInvertedDroImage, droImage)
-        DroViewer.showImage('Final dro', finalImage)
         return finalImage
     
     @staticmethod
@@ -130,5 +175,9 @@ class DroViewer:
         return result.astype('uint8')
 
     @staticmethod
-    def saveDroImage(image, imageName):
-        cv2.imwrite('dros/' + imageName+ '.png', image)
+    def storeImage(image):
+        cv2.imwrite('temp/' + 'temp.png', image)
+
+    @staticmethod
+    def saveDroImage(image, imagePath):
+        cv2.imwrite(imagePath, image)
