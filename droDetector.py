@@ -4,7 +4,6 @@ import tkinter as tk
 from tkinter import filedialog
 from PIL import ImageTk, Image
 import numpy as np
-import os
 
 class Dro:
     def __init__(self, droCoords):
@@ -155,11 +154,11 @@ class DroViewer:
             image2 = self.image[0 : int(height / 2), int(width / 2) : width]
             image3 = self.image[int(height / 2) : height, 0 : int(width / 2)]
             image4 = self.image[int(height / 2) : height, int(width / 2) : width]
+            self.saveDroImage(self.image, savedImagePath.name)
             self.saveDroImage(image1, savedImagePath.name[0:-4] + '1' + '.png')
             self.saveDroImage(image2, savedImagePath.name[0:-4] + '2' + '.png')
             self.saveDroImage(image3, savedImagePath.name[0:-4] + '3' + '.png')
             self.saveDroImage(image4, savedImagePath.name[0:-4] + '4' + '.png')
-            os.remove(savedImagePath.name)  #Regular file gets autocreated
     
     @staticmethod
     def storeDroImage(dro, image):
