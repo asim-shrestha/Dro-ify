@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 from PIL import ImageTk, Image
 import numpy as np
+import os
 
 class Dro:
     def __init__(self, droCoords):
@@ -61,7 +62,7 @@ class DroViewer:
 
     def setUpWidgets(self):
         self.theImage = tk.Label(text = "Please select an image!")
-        self.theImage.grid(row = 1, column = 0, columnspan = 4)
+        self.theImage.grid(row = 1, column = 0, columnspan = 5)
 
         self.selectImageButton = tk.Button(self.rootWindow, text = 'Select image', command = self.selectImageButton)
         self.selectImageButton.grid(row = 0, column = 0, columnspan = 1)
@@ -72,12 +73,15 @@ class DroViewer:
         self.droifyButton = tk.Button(self.rootWindow, text = 'Droify!', command = self.droifyButton, state = tk.DISABLED)
         self.droifyButton.grid(row = 0, column = 2, columnspan = 1)
 
-        self.saveImageButton = tk.Button(self.rootWindow, text = 'Save image', command = self.saveImageButton, state = tk.DISABLED)
-        self.saveImageButton.grid(row = 0, column = 3, columnspan = 1)
+        self.save1x1Button = tk.Button(self.rootWindow, text = 'Save image', command = self.save1x1Button, state = tk.DISABLED)
+        self.save1x1Button.grid(row = 0, column = 3, columnspan = 1)
+
+        self.save2x2Button = tk.Button(self.rootWindow, text = 'Save as 2x2 image', command = self.save2x2Button, state = tk.DISABLED)
+        self.save2x2Button.grid(row = 0, column = 4, columnspan = 1)
 
 
     def selectImageButton(self):
-        imageFileName = filedialog.askopenfilename(title = "Select an image", filetypes = (("png", "*.png"), ("all files", "*.*")))
+        imageFileName = filedialog.askopenfilename(title = "Select an image", filetypes = (("All files", "*.*"), ("png", "*.png")))
         if(imageFileName != ''):
             self.imagePath = imageFileName
             self.imageReset()
@@ -89,7 +93,8 @@ class DroViewer:
     def imageReset(self):
         self.findFaceButton.config(state = tk.NORMAL)
         self.droifyButton.config(state = tk.DISABLED)
-        self.saveImageButton.config(state = tk.DISABLED)
+        self.save1x1Button.config(state = tk.DISABLED)
+        self.save2x2Button.config(state = tk.DISABLED)
         return
 
     def findFaceButton(self):
@@ -113,7 +118,8 @@ class DroViewer:
         #Change button states
         self.findFaceButton.config(state = tk.DISABLED)
         self.droifyButton.config(state = tk.NORMAL)
-        self.saveImageButton.config(state = tk.NORMAL)
+        self.save1x1Button.config(state = tk.NORMAL)
+        self.save2x2Button.config(state = tk.NORMAL)
         return
 
     def droifyButton(self):
@@ -134,13 +140,27 @@ class DroViewer:
         self.droifyButton.config(state = tk.DISABLED)
         return
 
-    def saveImageButton(self):
+    def save1x1Button(self):
         savedImagePath = filedialog.asksaveasfile(mode='w', defaultextension=".png")
         if savedImagePath != None:
             self.saveDroImage(self.image, savedImagePath.name)
-            
 
-        return 
+    def save2x2Button(self):
+        savedImagePath = filedialog.asksaveasfile(mode='w', defaultextension=".png")
+        if savedImagePath != None:
+            dimensions = self.image.shape
+            height = dimensions[0]
+            width = dimensions[1]
+            image1 = self.image[0 : int(height / 2), 0 : int(width / 2)]
+            image2 = self.image[0 : int(height / 2), int(width / 2) : width]
+            image3 = self.image[int(height / 2) : height, 0 : int(width / 2)]
+            image4 = self.image[int(height / 2) : height, int(width / 2) : width]
+            self.saveDroImage(image1, savedImagePath.name[0:-4] + '1' + '.png')
+            self.saveDroImage(image2, savedImagePath.name[0:-4] + '2' + '.png')
+            self.saveDroImage(image3, savedImagePath.name[0:-4] + '3' + '.png')
+            self.saveDroImage(image4, savedImagePath.name[0:-4] + '4' + '.png')
+            os.remove(savedImagePath.name)  #Regular file gets autocreated
+    
     @staticmethod
     def storeDroImage(dro, image):
         droImage = image[dro.pointA[1]:dro.pointB[1] , dro.pointA[0]:dro.pointB[0]]
