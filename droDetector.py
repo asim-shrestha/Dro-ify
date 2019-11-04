@@ -61,19 +61,19 @@ class DroViewer:
 
     def setUpWidgets(self):
         self.theImage = tk.Label(text = "Please select an image!")
-        self.theImage.grid(row = 0, column = 0, columnspan = 4)
+        self.theImage.grid(row = 1, column = 0, columnspan = 4)
 
         self.selectImageButton = tk.Button(self.rootWindow, text = 'Select image', command = self.selectImageButton)
-        self.selectImageButton.grid(row = 3, column = 0, columnspan = 1)
+        self.selectImageButton.grid(row = 0, column = 0, columnspan = 1)
 
         self.findFaceButton = tk.Button(self.rootWindow, text = 'Find face', command = self.findFaceButton, state = tk.DISABLED)
-        self.findFaceButton.grid(row = 3, column = 1, columnspan = 1)
+        self.findFaceButton.grid(row = 0, column = 1, columnspan = 1)
 
         self.droifyButton = tk.Button(self.rootWindow, text = 'Droify!', command = self.droifyButton, state = tk.DISABLED)
-        self.droifyButton.grid(row = 3, column = 2, columnspan = 1)
+        self.droifyButton.grid(row = 0, column = 2, columnspan = 1)
 
         self.saveImageButton = tk.Button(self.rootWindow, text = 'Save image', command = self.saveImageButton, state = tk.DISABLED)
-        self.saveImageButton.grid(row = 3, column = 3, columnspan = 1)
+        self.saveImageButton.grid(row = 0, column = 3, columnspan = 1)
 
 
     def selectImageButton(self):
