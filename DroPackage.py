@@ -53,11 +53,14 @@ class DroViewer:
         self.setUpRootWindow()        
         self.setUpWidgets()
         self.rootWindow.mainloop()
+        return
 
     def setUpRootWindow(self):
         self.rootWindow = tk.Tk()
         self.rootWindow.title("Dro-Detector")
         self.rootWindow.iconbitmap('icon.ico')
+        self.rootWindow.resizable(False, False)
+        return 
 
     def setUpWidgets(self):
         self.theImage = tk.Label(text = "Please select an image!")
@@ -77,6 +80,7 @@ class DroViewer:
 
         self.save2x2Button = tk.Button(self.rootWindow, text = 'Save as 2x2 image', command = self.save2x2Button, state = tk.DISABLED)
         self.save2x2Button.grid(row = 0, column = 4, columnspan = 1)
+        return
 
 
     def selectImageButton(self):
@@ -93,7 +97,7 @@ class DroViewer:
         self.findFaceButton.config(state = tk.NORMAL)
         self.droifyButton.config(state = tk.DISABLED)
         self.save1x1Button.config(state = tk.DISABLED)
-        self.save2x2Button.config(state = tk.DISABLED)
+        self.save2x2Button.config(state = tk.NORMAL)
         return
 
     def findFaceButton(self):
@@ -104,15 +108,7 @@ class DroViewer:
             return
 
         faceInImage = image[self.dro.pointA[1]:self.dro.pointB[1] , self.dro.pointA[0]:self.dro.pointB[0]]
-
-        #save in temp
-        self.image = faceInImage
-        self.tempStoreImage(faceInImage)
-
-        #load image in temp
-        acquiredImage = ImageTk.PhotoImage(image = Image.open('temp/temp.png'))
-        self.theImage.config(image = acquiredImage)
-        self.theImage.image = acquiredImage
+        self.updateTheImage(faceInImage)
 
         #Change button states
         self.findFaceButton.config(state = tk.DISABLED)
@@ -122,27 +118,27 @@ class DroViewer:
         return
 
     def droifyButton(self):
-        if(self.imagePath == None or self.dro == None):
-            return
-
         image = cv2.imread(self.imagePath)
         droImage = self.getDroImage(self.dro, image)
+        self.updateTheImage(droImage)
+        self.droifyButton.config(state = tk.DISABLED)
+        return
 
+    def updateTheImage(self, image):
         #save in temp
-        self.tempStoreImage(droImage)
+        self.tempSaveImage(image)
 
         #load image in temp
         acquiredImage = ImageTk.PhotoImage(image = Image.open('temp/temp.png'))
         self.theImage.config(image = acquiredImage)
         self.theImage.image = acquiredImage
-
-        self.droifyButton.config(state = tk.DISABLED)
         return
 
     def save1x1Button(self):
         savedImagePath = filedialog.asksaveasfile(mode='w', defaultextension=".png")
         if savedImagePath != None:
             self.saveDroImage(self.image, savedImagePath.name)
+        return
 
     def save2x2Button(self):
         savedImagePath = filedialog.asksaveasfile(mode='w', defaultextension=".png")
@@ -159,23 +155,8 @@ class DroViewer:
             self.saveDroImage(image2, savedImagePath.name[0:-4] + '2' + '.png')
             self.saveDroImage(image3, savedImagePath.name[0:-4] + '3' + '.png')
             self.saveDroImage(image4, savedImagePath.name[0:-4] + '4' + '.png')
+            return
     
-    @staticmethod
-    def storeDroImage(dro, image):
-        droImage = image[dro.pointA[1]:dro.pointB[1] , dro.pointA[0]:dro.pointB[0]]
-        lineColour = (0, 255, 0)
-        lineThickness = 1
-        cv2.rectangle(droImage, dro.pointA, dro.pointB, (0, 255, 0), lineThickness)
-        DroViewer.showImage('Dro found', droImage)
-
-    @staticmethod
-    def viewDroInImage(dro, image):
-        droImage = image.copy()
-        lineColour = (0, 255, 0)
-        lineThickness = 1
-        cv2.rectangle(droImage, dro.pointA, dro.pointB, (0, 255, 0), lineThickness)
-        DroViewer.showImage('Dro found', droImage)
-
     @staticmethod
     def getDroImage(dro, image):
         #Greyscale dro closeup
@@ -194,14 +175,13 @@ class DroViewer:
     
     @staticmethod
     def dodge(front,back):
-        # The formula comes from http://www.adobe.com/devnet/pdf/pdfs/blend_modes.pdf
         result = back * 256.0 / (256.0 - front) 
         result[result > 255] = 255
         result[front == 255] = 255
         return result.astype('uint8')
 
     @staticmethod
-    def tempStoreImage(image):
+    def tempSaveImage(image):
         cv2.imwrite('temp/' + 'temp.png', image)
 
     @staticmethod
