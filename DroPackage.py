@@ -1,5 +1,6 @@
 import sys
 import cv2
+import os
 import tkinter as tk
 from tkinter import filedialog
 from PIL import ImageTk, Image
@@ -78,19 +79,15 @@ class DroViewer:
         self.save1x1Button = tk.Button(self.rootWindow, text = 'Save image', command = self.save1x1Button, state = tk.DISABLED)
         self.save1x1Button.grid(row = 0, column = 3, columnspan = 1)
 
-        self.save2x2Button = tk.Button(self.rootWindow, text = 'Save as 2x2 image', command = self.save2x2Button, state = tk.DISABLED)
+        self.save2x2Button = tk.Button(self.rootWindow, text = 'Save multi-image', command = self.save2x2Button, state = tk.DISABLED)
         self.save2x2Button.grid(row = 0, column = 4, columnspan = 1)
         return
 
 
     def selectImageButton(self):
-        imageFileName = filedialog.askopenfilename(title = "Select an image", filetypes = (("All files", "*.*"), ("png", "*.png")))
-        if(imageFileName != ''):
-            self.imagePath = imageFileName
-            self.imageReset()
-            acquiredImage = ImageTk.PhotoImage(image = Image.open(imageFileName))
-            self.theImage.config(image = acquiredImage)
-            self.theImage.image = acquiredImage
+        self.imagePath = filedialog.askopenfilename(title = "Select an image", filetypes = (("All files", "*.*"), ("png", "*.png")))
+        if(self.imagePath != ''):
+            self.updateTheImage(cv2.imread(self.imagePath))
             self.imageReset()
 
     def imageReset(self):
@@ -119,20 +116,28 @@ class DroViewer:
 
     def droifyButton(self):
         image = cv2.imread(self.imagePath)
+        print(self.imagePath)
         droImage = self.getDroImage(self.dro, image)
         self.updateTheImage(droImage)
         self.droifyButton.config(state = tk.DISABLED)
         return
 
-    def updateTheImage(self, image):
+    def updateTheImage(self, image):      
         #save in temp
         self.tempSaveImage(image)
 
         #load image in temp
         acquiredImage = ImageTk.PhotoImage(image = Image.open('temp/temp.png'))
+        self.image = self.getTempImage()
         self.theImage.config(image = acquiredImage)
         self.theImage.image = acquiredImage
         return
+
+    def getTempImage(self):
+        tempImagePath = (os.getcwd() + '\\temp\\temp.png').replace('\\', '/')
+        print(tempImagePath)
+        print(self.imagePath)
+        return cv2.imread(tempImagePath)
 
     def save1x1Button(self):
         savedImagePath = filedialog.asksaveasfile(mode='w', defaultextension=".png")
@@ -146,15 +151,16 @@ class DroViewer:
             dimensions = self.image.shape
             height = dimensions[0]
             width = dimensions[1]
-            image1 = self.image[0 : int(height / 2), 0 : int(width / 2)]
-            image2 = self.image[0 : int(height / 2), int(width / 2) : width]
-            image3 = self.image[int(height / 2) : height, 0 : int(width / 2)]
-            image4 = self.image[int(height / 2) : height, int(width / 2) : width]
+            emojiLength = 5
+            emojiHeight = int(height/emojiLength)
+            emojiWidth = int(width/emojiLength)
+            for row in range(0, emojiLength):
+                startY = int(row * emojiHeight)
+                for column in range(0, emojiLength):
+                    startX = int(column * emojiHeight)
+                    image = self.image[startY : startY + emojiHeight, startX : startX + emojiHeight]
+                    self.saveDroImage(image, savedImagePath.name[0:-4] + str((row * emojiLength) + column) + '.png') 
             self.saveDroImage(self.image, savedImagePath.name)
-            self.saveDroImage(image1, savedImagePath.name[0:-4] + '1' + '.png')
-            self.saveDroImage(image2, savedImagePath.name[0:-4] + '2' + '.png')
-            self.saveDroImage(image3, savedImagePath.name[0:-4] + '3' + '.png')
-            self.saveDroImage(image4, savedImagePath.name[0:-4] + '4' + '.png')
             return
     
     @staticmethod
@@ -182,7 +188,7 @@ class DroViewer:
 
     @staticmethod
     def tempSaveImage(image):
-        cv2.imwrite('temp/' + 'temp.png', image)
+        DroViewer.saveDroImage(image, 'temp/temp.png')
 
     @staticmethod
     def saveDroImage(image, imagePath):
